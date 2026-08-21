@@ -1,0 +1,3736 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+
+<meta charset="UTF-8">
+
+<meta
+  name="viewport"
+  content="width=device-width, initial-scale=1.0, viewport-fit=cover"
+>
+
+<meta
+  name="theme-color"
+  content="#172033"
+>
+
+<title>Commuter Experience Mapping</title>
+
+
+<!-- =====================================================
+     LEAFLET / OPENSTREETMAP
+     ===================================================== -->
+
+<link
+  rel="stylesheet"
+  href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"
+  crossorigin=""
+>
+
+<script
+  src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"
+  crossorigin=""
+></script>
+
+
+<style>
+
+/* =====================================================
+   DESIGN SYSTEM
+   ===================================================== */
+
+:root {
+
+  --dark: #172033;
+  --dark-2: #202B3D;
+  --blue: #2457A6;
+  --blue-light: #EAF2FB;
+  --accent: #F59E0B;
+  --green: #16804B;
+  --red: #B42318;
+  --white: #FFFFFF;
+  --text: #172033;
+  --muted: #667085;
+  --border: #D0D5DD;
+
+  --shadow:
+    0 12px 35px rgba(0,0,0,.18);
+
+}
+
+
+/* =====================================================
+   RESET
+   ===================================================== */
+
+* {
+  box-sizing: border-box;
+}
+
+
+html,
+body {
+
+  width: 100%;
+  height: 100%;
+
+  margin: 0;
+
+}
+
+
+body {
+
+  font-family:
+    Inter,
+    -apple-system,
+    BlinkMacSystemFont,
+    "Segoe UI",
+    Arial,
+    sans-serif;
+
+  color: var(--text);
+
+  background: var(--dark);
+
+  overflow: hidden;
+
+}
+
+
+/* =====================================================
+   MAP
+   ===================================================== */
+
+#map {
+
+  position: fixed;
+
+  inset: 0;
+
+  width: 100%;
+  height: 100%;
+
+  z-index: 1;
+
+}
+
+
+/* =====================================================
+   MAP OVERLAY
+   ===================================================== */
+
+.map-overlay {
+
+  position: fixed;
+
+  inset: 0;
+
+  z-index: 2;
+
+  pointer-events: none;
+
+}
+
+
+/* =====================================================
+   TOP BAR
+   ===================================================== */
+
+.top-bar {
+
+  position: absolute;
+
+  top: 0;
+  left: 0;
+  right: 0;
+
+  min-height: 72px;
+
+  padding: 10px 18px;
+
+  display: flex;
+
+  align-items: center;
+
+  justify-content: space-between;
+
+  background:
+    linear-gradient(
+      to bottom,
+      rgba(23,32,51,.95),
+      rgba(23,32,51,.75),
+      transparent
+    );
+
+  pointer-events: none;
+
+}
+
+
+.brand {
+
+  display: flex;
+
+  align-items: center;
+
+  gap: 12px;
+
+  color: white;
+
+}
+
+
+.brand-logo {
+
+  width: 46px;
+  height: 46px;
+
+  border-radius: 8px;
+
+  background: rgba(255,255,255,.95);
+
+  display: flex;
+
+  align-items: center;
+  justify-content: center;
+
+  overflow: hidden;
+
+}
+
+
+.brand-logo img {
+
+  max-width: 100%;
+  max-height: 100%;
+
+  object-fit: contain;
+
+}
+
+
+.brand-name {
+
+  font-size: 13px;
+
+  font-weight: 700;
+
+  letter-spacing: .3px;
+
+}
+
+
+.info-button {
+
+  width: 42px;
+  height: 42px;
+
+  border:
+    1px solid
+    rgba(255,255,255,.35);
+
+  border-radius: 50%;
+
+  background:
+    rgba(23,32,51,.75);
+
+  color: white;
+
+  font-size: 18px;
+
+  cursor: pointer;
+
+  pointer-events: auto;
+
+}
+
+
+/* =====================================================
+   START SCREEN
+   ===================================================== */
+
+.screen {
+
+  position: fixed;
+
+  inset: 0;
+
+  z-index: 20;
+
+  display: flex;
+
+  align-items: center;
+  justify-content: center;
+
+  padding: 20px;
+
+  background:
+    linear-gradient(
+      rgba(23,32,51,.88),
+      rgba(23,32,51,.70)
+    );
+
+}
+
+
+.start-card {
+
+  width: min(540px, 100%);
+
+  max-height:
+    calc(100vh - 40px);
+
+  overflow: auto;
+
+  background: white;
+
+  border-radius: 22px;
+
+  padding: 32px;
+
+  box-shadow: var(--shadow);
+
+}
+
+
+.start-logo {
+
+  width: 90px;
+  height: 70px;
+
+  margin: 0 auto 18px;
+
+  display: flex;
+
+  justify-content: center;
+  align-items: center;
+
+}
+
+
+.start-logo img {
+
+  max-width: 90px;
+  max-height: 70px;
+
+  object-fit: contain;
+
+}
+
+
+.start-card h1 {
+
+  margin: 0;
+
+  text-align: center;
+
+  font-size:
+    clamp(25px, 6vw, 36px);
+
+  line-height: 1.1;
+
+}
+
+
+.start-card .subtitle {
+
+  text-align: center;
+
+  color: var(--muted);
+
+  margin: 12px 0 24px;
+
+  line-height: 1.5;
+
+}
+
+
+/* =====================================================
+   LOCATION CHOICE
+   ===================================================== */
+
+.location-choice {
+
+  display: grid;
+
+  grid-template-columns: 1fr 1fr;
+
+  gap: 10px;
+
+  margin: 20px 0 10px;
+
+}
+
+
+.location-method {
+
+  border:
+    2px solid
+    #E4E7EC;
+
+  background: white;
+
+  border-radius: 13px;
+
+  padding: 15px;
+
+  display: flex;
+
+  align-items: center;
+
+  gap: 12px;
+
+  text-align: left;
+
+  cursor: pointer;
+
+  color: var(--text);
+
+  transition: .15s;
+
+}
+
+
+.location-method:hover {
+
+  border-color: var(--blue);
+
+}
+
+
+.location-method.selected {
+
+  border-color: var(--blue);
+
+  background: var(--blue-light);
+
+  box-shadow:
+    0 0 0 2px
+    rgba(36,87,166,.08);
+
+}
+
+
+.method-icon {
+
+  font-size: 28px;
+
+  flex-shrink: 0;
+
+}
+
+
+.location-method strong {
+
+  display: block;
+
+  font-size: 14px;
+
+}
+
+
+.location-method small {
+
+  display: block;
+
+  margin-top: 4px;
+
+  color: var(--muted);
+
+  font-size: 11px;
+
+  line-height: 1.3;
+
+}
+
+
+.location-status {
+
+  text-align: center;
+
+  color: var(--muted);
+
+  font-size: 13px;
+
+  min-height: 20px;
+
+  margin: 8px 0 18px;
+
+}
+
+
+/* =====================================================
+   PRIVACY BOX
+   ===================================================== */
+
+.privacy-box {
+
+  background: #F8FAFC;
+
+  border:
+    1px solid
+    var(--border);
+
+  border-radius: 12px;
+
+  padding: 16px;
+
+  font-size: 13px;
+
+  color: #475467;
+
+  line-height: 1.5;
+
+}
+
+
+.privacy-box strong {
+
+  color: var(--text);
+
+}
+
+
+/* =====================================================
+   PARTICIPANT CODE
+   ===================================================== */
+
+.participant-input {
+
+  margin: 20px 0;
+
+}
+
+
+.participant-input label {
+
+  display: block;
+
+  font-weight: 700;
+
+  margin-bottom: 7px;
+
+  font-size: 14px;
+
+}
+
+
+.participant-input input {
+
+  width: 100%;
+
+  padding: 14px;
+
+  font-size: 16px;
+
+  border:
+    1px solid
+    var(--border);
+
+  border-radius: 10px;
+
+  outline: none;
+
+}
+
+
+.participant-input input:focus {
+
+  border-color: var(--blue);
+
+  box-shadow:
+    0 0 0 3px
+    rgba(36,87,166,.12);
+
+}
+
+
+/* =====================================================
+   BUTTONS
+   ===================================================== */
+
+.primary-button {
+
+  width: 100%;
+
+  border: none;
+
+  background: var(--blue);
+
+  color: white;
+
+  padding: 15px;
+
+  border-radius: 11px;
+
+  font-size: 16px;
+
+  font-weight: 700;
+
+  cursor: pointer;
+
+}
+
+
+.primary-button:hover {
+
+  background: #1C478A;
+
+}
+
+
+.primary-button:disabled {
+
+  opacity: .45;
+
+  cursor: not-allowed;
+
+}
+
+
+/* =====================================================
+   BOTTOM INSTRUCTION
+   ===================================================== */
+
+.bottom-instruction {
+
+  position: absolute;
+
+  left: 50%;
+
+  bottom: 24px;
+
+  transform: translateX(-50%);
+
+  width:
+    min(560px, calc(100% - 30px));
+
+  padding: 15px 18px;
+
+  background:
+    rgba(23,32,51,.93);
+
+  color: white;
+
+  border-radius: 14px;
+
+  box-shadow: var(--shadow);
+
+  text-align: center;
+
+  pointer-events: auto;
+
+}
+
+
+.bottom-instruction strong {
+
+  display: block;
+
+  font-size: 16px;
+
+}
+
+
+.bottom-instruction span {
+
+  display: block;
+
+  color: #D0D5DD;
+
+  font-size: 13px;
+
+  margin-top: 3px;
+
+}
+
+
+/* =====================================================
+   LOCATION BADGE
+   ===================================================== */
+
+.location-badge {
+
+  position: absolute;
+
+  top: 84px;
+
+  left: 50%;
+
+  transform: translateX(-50%);
+
+  background:
+    rgba(255,255,255,.95);
+
+  padding: 8px 13px;
+
+  border-radius: 999px;
+
+  font-size: 12px;
+
+  font-weight: 700;
+
+  box-shadow:
+    0 4px 15px
+    rgba(0,0,0,.12);
+
+  pointer-events: none;
+
+  white-space: nowrap;
+
+}
+
+
+/* =====================================================
+   QUESTION CARD
+   ===================================================== */
+
+.question-card {
+
+  position: absolute;
+
+  left: 50%;
+
+  bottom: 24px;
+
+  transform: translateX(-50%);
+
+  width:
+    min(700px, calc(100% - 30px));
+
+  max-height:
+    calc(100vh - 130px);
+
+  overflow: auto;
+
+  background:
+    rgba(255,255,255,.98);
+
+  border-radius: 20px;
+
+  box-shadow: var(--shadow);
+
+  padding: 22px;
+
+  pointer-events: auto;
+
+}
+
+
+.question-header {
+
+  display: flex;
+
+  align-items: center;
+
+  justify-content: space-between;
+
+  gap: 15px;
+
+  margin-bottom: 16px;
+
+}
+
+
+.question-number {
+
+  color: var(--blue);
+
+  font-size: 12px;
+
+  font-weight: 800;
+
+  letter-spacing: .8px;
+
+  text-transform: uppercase;
+
+}
+
+
+.progress {
+
+  display: flex;
+
+  gap: 5px;
+
+  flex-wrap: wrap;
+
+  justify-content: flex-end;
+
+}
+
+
+.progress-dot {
+
+  width: 7px;
+  height: 7px;
+
+  border-radius: 50%;
+
+  background: #D0D5DD;
+
+}
+
+
+.progress-dot.active {
+
+  background: var(--blue);
+
+}
+
+
+.question-title {
+
+  margin: 0 0 6px;
+
+  font-size:
+    clamp(21px, 5vw, 28px);
+
+  line-height: 1.15;
+
+}
+
+
+.question-help {
+
+  margin: 0 0 18px;
+
+  color: var(--muted);
+
+  font-size: 14px;
+
+}
+
+
+/* =====================================================
+   OPTIONS
+   ===================================================== */
+
+.options {
+
+  display: grid;
+
+  grid-template-columns:
+    repeat(
+      auto-fit,
+      minmax(120px, 1fr)
+    );
+
+  gap: 10px;
+
+}
+
+
+.option {
+
+  position: relative;
+
+}
+
+
+.option input {
+
+  position: absolute;
+
+  opacity: 0;
+
+  pointer-events: none;
+
+}
+
+
+.option label {
+
+  min-height: 96px;
+
+  padding: 12px;
+
+  border:
+    2px solid
+    #E4E7EC;
+
+  border-radius: 13px;
+
+  display: flex;
+
+  flex-direction: column;
+
+  justify-content: center;
+
+  align-items: center;
+
+  text-align: center;
+
+  cursor: pointer;
+
+  transition: .15s;
+
+  background: white;
+
+}
+
+
+.option label:hover {
+
+  border-color: #98A2B3;
+
+}
+
+
+.option input:checked + label {
+
+  border-color: var(--blue);
+
+  background: var(--blue-light);
+
+  color: var(--blue);
+
+}
+
+
+.option-icon {
+
+  font-size: 29px;
+
+  margin-bottom: 6px;
+
+}
+
+
+.option-text {
+
+  font-size: 13px;
+
+  font-weight: 700;
+
+}
+
+
+/* =====================================================
+   TEXT AREA
+   ===================================================== */
+
+.textarea {
+
+  width: 100%;
+
+  min-height: 100px;
+
+  border:
+    1px solid
+    var(--border);
+
+  border-radius: 10px;
+
+  padding: 12px;
+
+  resize: vertical;
+
+  font: inherit;
+
+  outline: none;
+
+}
+
+
+.textarea:focus {
+
+  border-color: var(--blue);
+
+  box-shadow:
+    0 0 0 3px
+    rgba(36,87,166,.12);
+
+}
+
+
+/* =====================================================
+   QUESTION ACTIONS
+   ===================================================== */
+
+.question-actions {
+
+  display: flex;
+
+  justify-content: flex-end;
+
+  gap: 10px;
+
+  margin-top: 18px;
+
+}
+
+
+.secondary-button {
+
+  border:
+    1px solid
+    var(--border);
+
+  background: white;
+
+  color: var(--text);
+
+  padding: 12px 20px;
+
+  border-radius: 9px;
+
+  font-weight: 700;
+
+  cursor: pointer;
+
+}
+
+
+.next-button {
+
+  border: none;
+
+  background: var(--blue);
+
+  color: white;
+
+  padding: 12px 25px;
+
+  border-radius: 9px;
+
+  font-weight: 700;
+
+  cursor: pointer;
+
+}
+
+
+/* =====================================================
+   MARKER
+   ===================================================== */
+
+.selected-marker {
+
+  width: 28px;
+  height: 28px;
+
+  background: #D92D20;
+
+  border: 4px solid white;
+
+  border-radius: 50%;
+
+  box-shadow:
+    0 3px 12px
+    rgba(0,0,0,.35);
+
+}
+
+
+/* =====================================================
+   FOOTER
+   ===================================================== */
+
+.map-footer {
+
+  position: absolute;
+
+  right: 10px;
+
+  bottom: 5px;
+
+  z-index: 5;
+
+  font-size: 10px;
+
+  background:
+    rgba(255,255,255,.8);
+
+  padding: 3px 6px;
+
+  border-radius: 4px;
+
+  pointer-events: auto;
+
+}
+
+
+/* =====================================================
+   SUCCESS SCREEN
+   ===================================================== */
+
+.success-screen {
+
+  position: fixed;
+
+  inset: 0;
+
+  z-index: 50;
+
+  display: none;
+
+  align-items: center;
+  justify-content: center;
+
+  background:
+    rgba(23,32,51,.92);
+
+  padding: 20px;
+
+}
+
+
+.success-card {
+
+  width:
+    min(480px, 100%);
+
+  background: white;
+
+  border-radius: 22px;
+
+  padding: 35px;
+
+  text-align: center;
+
+  box-shadow: var(--shadow);
+
+}
+
+
+.success-icon {
+
+  width: 75px;
+  height: 75px;
+
+  margin: 0 auto 20px;
+
+  border-radius: 50%;
+
+  background: #EAF7F0;
+
+  color: var(--green);
+
+  display: flex;
+
+  align-items: center;
+  justify-content: center;
+
+  font-size: 38px;
+
+}
+
+
+.success-card h2 {
+
+  margin: 0 0 10px;
+
+}
+
+
+.success-card p {
+
+  color: var(--muted);
+
+  line-height: 1.5;
+
+}
+
+
+/* =====================================================
+   INFO MODAL
+   ===================================================== */
+
+.modal {
+
+  position: fixed;
+
+  inset: 0;
+
+  z-index: 60;
+
+  display: none;
+
+  align-items: center;
+  justify-content: center;
+
+  padding: 20px;
+
+  background:
+    rgba(0,0,0,.55);
+
+}
+
+
+.modal-card {
+
+  width:
+    min(500px, 100%);
+
+  max-height:
+    calc(100vh - 40px);
+
+  overflow: auto;
+
+  background: white;
+
+  border-radius: 18px;
+
+  padding: 25px;
+
+  box-shadow: var(--shadow);
+
+  line-height: 1.5;
+
+}
+
+
+.modal-close {
+
+  float: right;
+
+  border: none;
+
+  background: transparent;
+
+  font-size: 25px;
+
+  cursor: pointer;
+
+}
+
+
+/* =====================================================
+   MOBILE
+   ===================================================== */
+
+@media(max-width:600px) {
+
+  .top-bar {
+
+    min-height: 65px;
+
+    padding: 8px 12px;
+
+  }
+
+
+  .brand-name {
+
+    max-width: 190px;
+
+    font-size: 11px;
+
+  }
+
+
+  .brand-logo {
+
+    width: 40px;
+    height: 40px;
+
+  }
+
+
+  .location-choice {
+
+    grid-template-columns: 1fr;
+
+  }
+
+
+  .question-card {
+
+    bottom: 12px;
+
+    width:
+      calc(100% - 20px);
+
+    padding: 17px;
+
+    border-radius: 17px;
+
+    max-height: 72vh;
+
+  }
+
+
+  .options {
+
+    grid-template-columns: repeat(2, 1fr);
+
+  }
+
+
+  .option label {
+
+    min-height: 82px;
+
+  }
+
+
+  .option-icon {
+
+    font-size: 25px;
+
+  }
+
+
+  .bottom-instruction {
+
+    bottom: 15px;
+
+    width:
+      calc(100% - 20px);
+
+  }
+
+
+  .start-card {
+
+    padding: 24px;
+
+  }
+
+}
+
+</style>
+
+</head>
+
+
+<body>
+
+
+<!-- =====================================================
+     MAP
+     ===================================================== -->
+
+<div id="map"></div>
+
+
+<div class="map-overlay">
+
+
+  <!-- =================================================
+       TOP BAR
+       ================================================= -->
+
+  <div class="top-bar">
+
+    <div class="brand">
+
+      <div class="brand-logo">
+
+        <img
+          src="images/logo.png"
+          alt="Institution logo"
+          onerror="this.style.display='none'"
+        >
+
+      </div>
+
+      <div class="brand-name">
+
+        COMMUTER EXPERIENCE
+        MAPPING
+
+      </div>
+
+    </div>
+
+
+    <button
+      class="info-button"
+      id="infoButton"
+      aria-label="Study information"
+    >
+
+      i
+
+    </button>
+
+  </div>
+
+
+  <!-- =================================================
+       LOCATION BADGE
+       ================================================= -->
+
+  <div
+    class="location-badge"
+    id="locationBadge"
+    style="display:none;"
+  >
+
+    ✓ Location selected
+
+  </div>
+
+
+  <!-- =================================================
+       MAP INSTRUCTION
+       ================================================= -->
+
+  <div
+    class="bottom-instruction"
+    id="mapInstruction"
+    style="display:none;"
+  >
+
+    <strong>
+      Tap the map to select a location
+    </strong>
+
+    <span>
+      Choose the approximate place where
+      the experience occurred.
+    </span>
+
+  </div>
+
+
+  <!-- =================================================
+       QUESTION CARD
+       ================================================= -->
+
+  <div
+    class="question-card"
+    id="questionCard"
+    style="display:none;"
+  >
+
+    <div class="question-header">
+
+      <div
+        class="question-number"
+        id="questionNumber"
+      >
+        QUESTION
+      </div>
+
+      <div
+        class="progress"
+        id="progress"
+      ></div>
+
+    </div>
+
+
+    <h2
+      class="question-title"
+      id="questionTitle"
+    ></h2>
+
+
+    <p
+      class="question-help"
+      id="questionHelp"
+    ></p>
+
+
+    <div
+      class="options"
+      id="questionOptions"
+    ></div>
+
+
+    <div
+      class="question-actions"
+      id="questionActions"
+    ></div>
+
+  </div>
+
+
+  <!-- =================================================
+       OPENSTREETMAP ATTRIBUTION
+       ================================================= -->
+
+  <div class="map-footer">
+
+    Map data
+    <a
+      href="https://www.openstreetmap.org/copyright"
+      target="_blank"
+      rel="noopener"
+    >
+      © OpenStreetMap contributors
+    </a>
+
+  </div>
+
+</div>
+
+
+<!-- =====================================================
+     START SCREEN
+     ===================================================== -->
+
+<div
+  class="screen"
+  id="startScreen"
+>
+
+  <div class="start-card">
+
+
+    <div class="start-logo">
+
+      <img
+        src="images/logo.png"
+        alt="Institution logo"
+        onerror="this.style.display='none'"
+      >
+
+    </div>
+
+
+    <h1>
+      Where does it happen?
+    </h1>
+
+
+    <p class="subtitle">
+
+      Help us understand experiences
+      on everyday journeys.
+
+    </p>
+
+
+    <!-- ================================================
+         LOCATION METHOD
+         ================================================ -->
+
+    <div class="privacy-box">
+
+      <strong>
+        Choose how you want to select the location
+      </strong>
+
+      <p>
+
+        You can either use your device's current
+        location or select an approximate location
+        yourself on the map.
+
+      </p>
+
+      <p>
+
+        <strong>
+          Using GPS:
+        </strong>
+
+        your browser will ask for permission to access
+        your device's location.
+
+        You can decline and use the map instead.
+
+      </p>
+
+      <p>
+
+        Please select an approximate location rather
+        than an exact personal address.
+
+      </p>
+
+    </div>
+
+
+    <div class="location-choice">
+
+
+      <!-- GPS -->
+
+      <button
+        type="button"
+        class="location-method"
+        id="gpsButton"
+      >
+
+        <span class="method-icon">
+          📍
+        </span>
+
+        <span>
+
+          <strong>
+            Use my current location
+          </strong>
+
+          <small>
+            Requires device location permission
+          </small>
+
+        </span>
+
+      </button>
+
+
+      <!-- MANUAL -->
+
+      <button
+        type="button"
+        class="location-method"
+        id="manualButton"
+      >
+
+        <span class="method-icon">
+          🗺️
+        </span>
+
+        <span>
+
+          <strong>
+            Select on the map
+          </strong>
+
+          <small>
+            No GPS permission required
+          </small>
+
+        </span>
+
+      </button>
+
+
+    </div>
+
+
+    <div
+      class="location-status"
+      id="locationStatus"
+    >
+
+      Select a location method to continue.
+
+    </div>
+
+
+    <!-- ================================================
+         PARTICIPANT CODE
+         ================================================ -->
+
+    <div class="participant-input">
+
+      <label
+        for="participantCode"
+      >
+
+        Participant code
+
+      </label>
+
+
+      <input
+        type="text"
+        id="participantCode"
+        placeholder="Enter your assigned code"
+        autocomplete="off"
+      >
+
+    </div>
+
+
+    <button
+      class="primary-button"
+      id="beginButton"
+      disabled
+    >
+
+      Continue
+
+    </button>
+
+
+  </div>
+
+</div>
+
+
+<!-- =====================================================
+     INFORMATION MODAL
+     ===================================================== -->
+
+<div
+  class="modal"
+  id="infoModal"
+>
+
+  <div class="modal-card">
+
+
+    <button
+      class="modal-close"
+      id="closeInfo"
+      aria-label="Close"
+    >
+
+      ×
+
+    </button>
+
+
+    <h2>
+      About this research
+    </h2>
+
+
+    <p>
+
+      This research seeks to understand
+      experiences of unwanted or uncomfortable
+      behaviour in streets, public spaces and
+      everyday commuting environments.
+
+    </p>
+
+
+    <p>
+
+      You may select an approximate location
+      manually on the map or, if you choose,
+      give permission for the website to use
+      your device's current location.
+
+    </p>
+
+
+    <p>
+
+      GPS access is optional. Declining GPS
+      permission does not prevent you from
+      participating.
+
+    </p>
+
+
+    <p>
+
+      Please do not enter names, telephone
+      numbers, email addresses or other
+      identifying information.
+
+    </p>
+
+
+    <hr>
+
+
+    <p>
+
+      <strong>
+        Research team
+      </strong>
+
+      <br>
+
+      [Institution / Department]
+
+      <br>
+
+      [Research contact]
+
+    </p>
+
+
+    <p>
+
+      <strong>
+        Ethics / review reference
+      </strong>
+
+      <br>
+
+      [Insert reference if applicable]
+
+    </p>
+
+
+    <button
+      class="primary-button"
+      id="closeInfoButton"
+    >
+
+      Continue
+
+    </button>
+
+
+  </div>
+
+</div>
+
+
+<!-- =====================================================
+     SUCCESS SCREEN
+     ===================================================== -->
+
+<div
+  class="success-screen"
+  id="successScreen"
+>
+
+  <div class="success-card">
+
+    <div class="success-icon">
+      ✓
+    </div>
+
+
+    <h2>
+      Thank you
+    </h2>
+
+
+    <p>
+
+      Your response has been recorded.
+
+    </p>
+
+
+    <p>
+
+      Your contribution will help us
+      understand experiences in public
+      spaces.
+
+    </p>
+
+  </div>
+
+</div>
+
+
+<!-- =====================================================
+     HIDDEN SUBMISSION FRAME
+     ===================================================== -->
+
+<iframe
+  name="submissionFrame"
+  id="submissionFrame"
+  style="display:none;"
+></iframe>
+
+
+<script>
+
+
+/* =====================================================
+   GOOGLE APPS SCRIPT URL
+   =====================================================
+
+   Replace this with your deployed Apps Script /exec URL.
+
+   Example:
+
+   https://script.google.com/macros/s/XXXX/exec
+
+   ===================================================== */
+
+const GOOGLE_SCRIPT_URL =
+  "https://script.google.com/a/macros/monash.edu/s/AKfycbxu_65gwrMkfEG0gdybAQH-cfR8hDSyz0f-w8wCwvTguYdkZDqPnaWdemYewVEQkvcHqQ/exec";
+
+
+/* =====================================================
+   MAP INITIAL LOCATION
+   =====================================================
+
+   Change these to the centre of your study area.
+
+   Current example: Mumbai.
+
+   ===================================================== */
+
+const STUDY_LATITUDE =
+  19.0760;
+
+const STUDY_LONGITUDE =
+  72.8777;
+
+const INITIAL_ZOOM =
+  12;
+
+
+/* =====================================================
+   MAP INITIALISATION
+   ===================================================== */
+
+const map =
+  L.map(
+    "map",
+    {
+      zoomControl: false
+    }
+  );
+
+
+L.control.zoom({
+
+  position: "bottomright"
+
+}).addTo(map);
+
+
+L.tileLayer(
+
+  "https://tile.openstreetmap.org/{z}/{x}/{y}.png",
+
+  {
+
+    maxZoom: 19,
+
+    attribution:
+      '&copy; <a href="https://www.openstreetmap.org/copyright" target="_blank" rel="noopener">OpenStreetMap contributors</a>'
+
+  }
+
+).addTo(map);
+
+
+map.setView(
+
+  [
+    STUDY_LATITUDE,
+    STUDY_LONGITUDE
+  ],
+
+  INITIAL_ZOOM
+
+);
+
+
+/* =====================================================
+   APPLICATION STATE
+   ===================================================== */
+
+let selectedMarker =
+  null;
+
+
+let selectedLocation =
+  null;
+
+
+let locationMethod =
+  null;
+
+
+let locationReady =
+  false;
+
+
+let currentQuestion =
+  0;
+
+
+/* =====================================================
+   ANSWERS
+   ===================================================== */
+
+let answers = {
+
+  participantCode:
+    "",
+
+  ageGroup:
+    "",
+
+  commuteFrequency:
+    "",
+
+  transport:
+    [],
+
+  journeyDuration:
+    "",
+
+  experiencedBehaviour:
+    "",
+
+  behaviourType:
+    [],
+
+  timeOfDay:
+    "",
+
+  crowding:
+    "",
+
+  impact:
+    [],
+
+  discomfort:
+    "",
+
+  description:
+    "",
+
+  suggestions:
+    ""
+
+};
+
+
+/* =====================================================
+   QUESTIONS
+   ===================================================== */
+
+const questions = [
+
+  {
+
+    id: "ageGroup",
+
+    title:
+      "Which age group are you in?",
+
+    help:
+      "Select one option.",
+
+    type: "single",
+
+    options: [
+
+      ["18–24", "18-24", "👤"],
+      ["25–34", "25-34", "👤"],
+      ["35–44", "35-44", "👤"],
+      ["45–54", "45-54", "👤"],
+      ["55–64", "55-64", "👤"],
+      ["65+", "65+", "👤"],
+      ["Prefer not to say", "Prefer not to say", "🔒"]
+
+    ]
+
+  },
+
+
+  {
+
+    id: "commuteFrequency",
+
+    title:
+      "How often do you commute?",
+
+    help:
+      "Think about your usual journey.",
+
+    type: "single",
+
+    options: [
+
+      ["Daily", "Daily", "📅"],
+      ["4–6 days/week", "4-6 days per week", "📆"],
+      ["1–3 days/week", "1-3 days per week", "🗓️"],
+      ["Less often", "Less than once a week", "📅"]
+
+    ]
+
+  },
+
+
+  {
+
+    id: "transport",
+
+    title:
+      "How were you travelling?",
+
+    help:
+      "Select all that apply.",
+
+    type: "multi",
+
+    options: [
+
+      ["Walking", "Walking", "🚶"],
+      ["Bicycle", "Bicycle", "🚲"],
+      ["Two-wheeler", "Two-wheeler", "🛵"],
+      ["Car", "Car", "🚗"],
+      ["Bus", "Bus", "🚌"],
+      ["Train / Metro", "Train/Metro", "🚆"],
+      ["Auto / Taxi", "Auto/Taxi", "🚕"]
+
+    ]
+
+  },
+
+
+  {
+
+    id: "journeyDuration",
+
+    title:
+      "How long was the journey?",
+
+    help:
+      "An approximate answer is fine.",
+
+    type: "single",
+
+    options: [
+
+      ["< 15 min", "Less than 15 minutes", "⏱️"],
+      ["15–30 min", "15-30 minutes", "⏱️"],
+      ["31–60 min", "31-60 minutes", "⏱️"],
+      ["> 60 min", "More than 60 minutes", "⏰"]
+
+    ]
+
+  },
+
+
+  {
+
+    id: "experiencedBehaviour",
+
+    title:
+      "What happened at this location?",
+
+    help:
+      "Select the option that best describes your experience.",
+
+    type: "single",
+
+    options: [
+
+      ["Yes", "Yes", "⚠️"],
+      ["No", "No", "✓"],
+      ["Prefer not to say", "Prefer not to say", "🔒"]
+
+    ]
+
+  },
+
+
+  {
+
+    id: "behaviourType",
+
+    title:
+      "What type of behaviour occurred?",
+
+    help:
+      "Select all that apply.",
+
+    type: "multi",
+
+    options: [
+
+      ["Comments", "Unwanted comments", "💬"],
+      ["Gestures", "Gestures", "👋"],
+      ["Staring", "Staring", "👁️"],
+      ["Following", "Following", "🚶"],
+      ["Physical contact", "Unwanted physical contact", "✋"],
+      ["Photography", "Photography/video", "📷"],
+      ["Blocked / cornered", "Blocked or cornered", "🚧"],
+      ["Other", "Other", "⋯"]
+
+    ]
+
+  },
+
+
+  {
+
+    id: "timeOfDay",
+
+    title:
+      "When did it happen?",
+
+    help:
+      "Select the approximate time.",
+
+    type: "single",
+
+    options: [
+
+      ["Morning", "Morning", "🌅"],
+      ["Afternoon", "Afternoon", "☀️"],
+      ["Evening", "Evening", "🌇"],
+      ["Night", "Night", "🌙"]
+
+    ]
+
+  },
+
+
+  {
+
+    id: "crowding",
+
+    title:
+      "How busy was this place?",
+
+    help:
+      "Think about the conditions at the time.",
+
+    type: "single",
+
+    options: [
+
+      ["Very crowded", "Very crowded", "👥"],
+      ["Moderately crowded", "Moderately crowded", "👥"],
+      ["Not crowded", "Not crowded", "👤"],
+      ["Isolated", "Isolated", "○"]
+
+    ]
+
+  },
+
+
+  {
+
+    id: "impact",
+
+    title:
+      "How did this affect your journey?",
+
+    help:
+      "Select all that apply.",
+
+    type: "multi",
+
+    options: [
+
+      ["Uncomfortable", "Felt uncomfortable", "😐"],
+      ["Unsafe", "Felt unsafe", "😟"],
+      ["Changed route", "Changed route", "🗺️"],
+      ["Changed transport", "Changed transport", "🚌"],
+      ["Avoided location", "Avoided location", "🚫"],
+      ["Changed travel time", "Changed travel time", "⏰"]
+
+    ]
+
+  },
+
+
+  {
+
+    id: "discomfort",
+
+    title:
+      "How uncomfortable was the experience?",
+
+    help:
+      "1 = very low, 5 = very high.",
+
+    type: "single",
+
+    options: [
+
+      ["1", "Very low", "🙂"],
+      ["2", "Low", "🙂"],
+      ["3", "Moderate", "😐"],
+      ["4", "High", "😟"],
+      ["5", "Very high", "😨"]
+
+    ]
+
+  },
+
+
+  {
+
+    id: "description",
+
+    title:
+      "Would you like to add anything?",
+
+    help:
+      "Optional. Please do not include names or identifying information.",
+
+    type: "textarea"
+
+  },
+
+
+  {
+
+    id: "suggestions",
+
+    title:
+      "What could make this place feel safer or more comfortable?",
+
+    help:
+      "Optional.",
+
+    type: "textarea"
+
+  }
+
+];
+
+
+/* =====================================================
+   DOM REFERENCES
+   ===================================================== */
+
+const startScreen =
+  document.getElementById(
+    "startScreen"
+  );
+
+
+const gpsButton =
+  document.getElementById(
+    "gpsButton"
+  );
+
+
+const manualButton =
+  document.getElementById(
+    "manualButton"
+  );
+
+
+const locationStatus =
+  document.getElementById(
+    "locationStatus"
+  );
+
+
+const beginButton =
+  document.getElementById(
+    "beginButton"
+  );
+
+
+const mapInstruction =
+  document.getElementById(
+    "mapInstruction"
+  );
+
+
+const locationBadge =
+  document.getElementById(
+    "locationBadge"
+  );
+
+
+const questionCard =
+  document.getElementById(
+    "questionCard"
+  );
+
+
+/* =====================================================
+   MANUAL MAP METHOD
+   ===================================================== */
+
+manualButton.addEventListener(
+
+  "click",
+
+  function() {
+
+    locationMethod =
+      "manual";
+
+
+    locationReady =
+      false;
+
+
+    selectedLocation =
+      null;
+
+
+    if (selectedMarker) {
+
+      map.removeLayer(
+        selectedMarker
+      );
+
+      selectedMarker =
+        null;
+
+    }
+
+
+    gpsButton.classList.remove(
+      "selected"
+    );
+
+
+    manualButton.classList.add(
+      "selected"
+    );
+
+
+    locationStatus.textContent =
+      "Continue, then tap the map to choose an approximate location.";
+
+
+    beginButton.disabled =
+      false;
+
+  }
+
+);
+
+
+/* =====================================================
+   GPS METHOD
+   ===================================================== */
+
+gpsButton.addEventListener(
+
+  "click",
+
+  function() {
+
+
+    if (
+      !navigator.geolocation
+    ) {
+
+      locationStatus.textContent =
+        "Location services are not available in this browser. Please select the location manually.";
+
+      return;
+
+    }
+
+
+    locationMethod =
+      "gps";
+
+
+    locationReady =
+      false;
+
+
+    selectedLocation =
+      null;
+
+
+    gpsButton.classList.add(
+      "selected"
+    );
+
+
+    manualButton.classList.remove(
+      "selected"
+    );
+
+
+    beginButton.disabled =
+      true;
+
+
+    locationStatus.textContent =
+      "Requesting permission to use your device location...";
+
+
+    navigator.geolocation.getCurrentPosition(
+
+      function(position) {
+
+
+        selectedLocation = {
+
+          latitude:
+            Number(
+              position.coords.latitude
+                .toFixed(6)
+            ),
+
+          longitude:
+            Number(
+              position.coords.longitude
+                .toFixed(6)
+            )
+
+        };
+
+
+        locationReady =
+          true;
+
+
+        locationStatus.textContent =
+          "✓ Your current location has been selected.";
+
+
+        beginButton.disabled =
+          false;
+
+
+        showSelectedLocation();
+
+      },
+
+
+      function(error) {
+
+
+        locationReady =
+          false;
+
+
+        selectedLocation =
+          null;
+
+
+        gpsButton.classList.remove(
+          "selected"
+        );
+
+
+        locationMethod =
+          null;
+
+
+        switch (
+          error.code
+        ) {
+
+
+          case error.PERMISSION_DENIED:
+
+            locationStatus.textContent =
+              "Location permission was declined. You can select a location manually instead.";
+
+            break;
+
+
+          case error.POSITION_UNAVAILABLE:
+
+            locationStatus.textContent =
+              "Your location could not be determined. You can select a location manually instead.";
+
+            break;
+
+
+          case error.TIMEOUT:
+
+            locationStatus.textContent =
+              "The location request timed out. You can try again or select a location manually.";
+
+            break;
+
+
+          default:
+
+            locationStatus.textContent =
+              "We could not obtain your location. Please select a location manually.";
+
+        }
+
+
+        beginButton.disabled =
+          true;
+
+      },
+
+
+      {
+
+        enableHighAccuracy:
+          true,
+
+        timeout:
+          10000,
+
+        maximumAge:
+          60000
+
+      }
+
+    );
+
+  }
+
+);
+
+
+/* =====================================================
+   SHOW SELECTED LOCATION
+   ===================================================== */
+
+function showSelectedLocation() {
+
+
+  if (
+    !selectedLocation
+  ) {
+
+    return;
+
+  }
+
+
+  if (
+    selectedMarker
+  ) {
+
+    map.removeLayer(
+      selectedMarker
+    );
+
+  }
+
+
+  const markerIcon =
+    L.divIcon({
+
+      className: "",
+
+      html:
+        '<div class="selected-marker"></div>',
+
+      iconSize:
+        [28, 28],
+
+      iconAnchor:
+        [14, 14]
+
+    });
+
+
+  selectedMarker =
+    L.marker(
+
+      [
+        selectedLocation.latitude,
+        selectedLocation.longitude
+      ],
+
+      {
+        icon:
+          markerIcon
+      }
+
+    ).addTo(map);
+
+
+  selectedMarker.bindPopup(
+
+    locationMethod === "gps"
+
+      ? "<strong>Your current location</strong><br>Location obtained with your permission."
+
+      : "<strong>Selected location</strong><br>Approximate map location."
+
+  );
+
+
+  map.setView(
+
+    [
+      selectedLocation.latitude,
+      selectedLocation.longitude
+    ],
+
+    16
+
+  );
+
+}
+
+
+/* =====================================================
+   MANUAL MAP CLICK
+   ===================================================== */
+
+map.on(
+
+  "click",
+
+  function(event) {
+
+
+    /*
+     * Only allow map selection when
+     * participant chose manual mode.
+     */
+
+    if (
+      locationMethod !== "manual"
+    ) {
+
+      return;
+
+    }
+
+
+    /*
+     * Do not allow changing the location
+     * after the questions have started.
+     */
+
+    if (
+      questionCard.style.display !==
+      "none"
+    ) {
+
+      return;
+
+    }
+
+
+    selectedLocation = {
+
+      latitude:
+        Number(
+          event.latlng.lat.toFixed(6)
+        ),
+
+      longitude:
+        Number(
+          event.latlng.lng.toFixed(6)
+        )
+
+    };
+
+
+    locationReady =
+      true;
+
+
+    showSelectedLocation();
+
+
+    locationBadge.style.display =
+      "block";
+
+
+    locationBadge.textContent =
+      "✓ Approximate location selected";
+
+
+    mapInstruction.style.display =
+      "none";
+
+
+    /*
+     * Begin questions automatically
+     * after manual selection.
+     */
+
+    currentQuestion =
+      0;
+
+
+    renderQuestion();
+
+  }
+
+);
+
+
+/* =====================================================
+   BEGIN BUTTON
+   ===================================================== */
+
+beginButton.addEventListener(
+
+  "click",
+
+  function() {
+
+
+    const code =
+      document
+        .getElementById(
+          "participantCode"
+        )
+        .value
+        .trim();
+
+
+    if (!code) {
+
+      alert(
+        "Please enter your participant code."
+      );
+
+      return;
+
+    }
+
+
+    if (!locationMethod) {
+
+      alert(
+        "Please choose a location method."
+      );
+
+      return;
+
+    }
+
+
+    answers.participantCode =
+      code;
+
+
+    /*
+     * GPS
+     */
+
+    if (
+      locationMethod === "gps"
+    ) {
+
+
+      if (
+        !locationReady ||
+        !selectedLocation
+      ) {
+
+        alert(
+          "Please wait for your location to be obtained."
+        );
+
+        return;
+
+      }
+
+
+      startScreen.style.display =
+        "none";
+
+
+      locationBadge.style.display =
+        "block";
+
+
+      locationBadge.textContent =
+        "✓ Current location selected";
+
+
+      currentQuestion =
+        0;
+
+
+      renderQuestion();
+
+
+      return;
+
+    }
+
+
+    /*
+     * Manual map selection
+     */
+
+    if (
+      locationMethod === "manual"
+    ) {
+
+
+      startScreen.style.display =
+        "none";
+
+
+      mapInstruction.style.display =
+        "block";
+
+
+      mapInstruction.innerHTML =
+
+        "<strong>Tap the map to select a location</strong>" +
+
+        "<span>Choose the approximate place where the experience occurred.</span>";
+
+    }
+
+  }
+
+);
+
+
+/* =====================================================
+   RENDER QUESTION
+   ===================================================== */
+
+function renderQuestion() {
+
+
+  const question =
+    questions[
+      currentQuestion
+    ];
+
+
+  const title =
+    document.getElementById(
+      "questionTitle"
+    );
+
+
+  const help =
+    document.getElementById(
+      "questionHelp"
+    );
+
+
+  const number =
+    document.getElementById(
+      "questionNumber"
+    );
+
+
+  const options =
+    document.getElementById(
+      "questionOptions"
+    );
+
+
+  const actions =
+    document.getElementById(
+      "questionActions"
+    );
+
+
+  questionCard.style.display =
+    "block";
+
+
+  mapInstruction.style.display =
+    "none";
+
+
+  number.textContent =
+
+    "QUESTION " +
+    (currentQuestion + 1) +
+    " OF " +
+    questions.length;
+
+
+  title.textContent =
+    question.title;
+
+
+  help.textContent =
+    question.help;
+
+
+  options.innerHTML =
+    "";
+
+
+  actions.innerHTML =
+    "";
+
+
+  /*
+   * Progress
+   */
+
+  const progress =
+    document.getElementById(
+      "progress"
+    );
+
+
+  progress.innerHTML =
+    "";
+
+
+  questions.forEach(
+
+    function(_, index) {
+
+      const dot =
+        document.createElement(
+          "div"
+        );
+
+
+      dot.className =
+        "progress-dot" +
+        (
+          index <= currentQuestion
+            ? " active"
+            : ""
+        );
+
+
+      progress.appendChild(
+        dot
+      );
+
+    }
+
+  );
+
+
+  /*
+   * Textarea
+   */
+
+  if (
+    question.type ===
+    "textarea"
+  ) {
+
+
+    const textarea =
+      document.createElement(
+        "textarea"
+      );
+
+
+    textarea.className =
+      "textarea";
+
+
+    textarea.id =
+      "questionTextarea";
+
+
+    textarea.placeholder =
+      "Optional response";
+
+
+    textarea.value =
+      answers[
+        question.id
+      ] || "";
+
+
+    options.appendChild(
+      textarea
+    );
+
+
+  }
+
+
+  /*
+   * Multiple / single options
+   */
+
+  else {
+
+
+    question.options.forEach(
+
+      function(option, index) {
+
+
+        const displayText =
+          option[0];
+
+
+        const value =
+          option[1];
+
+
+        const icon =
+          option[2];
+
+
+        const wrapper =
+          document.createElement(
+            "div"
+          );
+
+
+        wrapper.className =
+          "option";
+
+
+        const input =
+          document.createElement(
+            "input"
+          );
+
+
+        const inputId =
+          "option_" +
+          currentQuestion +
+          "_" +
+          index;
+
+
+        input.type =
+          question.type === "multi"
+            ? "checkbox"
+            : "radio";
+
+
+        input.name =
+          "questionOption";
+
+
+        input.id =
+          inputId;
+
+
+        input.value =
+          value;
+
+
+        /*
+         * Restore selection
+         */
+
+        if (
+          question.type === "multi"
+        ) {
+
+
+          if (
+
+            Array.isArray(
+              answers[
+                question.id
+              ]
+            )
+
+            &&
+
+            answers[
+              question.id
+            ].includes(
+              value
+            )
+
+          ) {
+
+            input.checked =
+              true;
+
+          }
+
+        }
+
+        else {
+
+
+          if (
+            answers[
+              question.id
+            ] === value
+          ) {
+
+            input.checked =
+              true;
+
+          }
+
+        }
+
+
+        const label =
+          document.createElement(
+            "label"
+          );
+
+
+        label.htmlFor =
+          inputId;
+
+
+        label.innerHTML =
+
+          '<span class="option-icon">' +
+          icon +
+          '</span>' +
+
+          '<span class="option-text">' +
+          displayText +
+          '</span>';
+
+
+        wrapper.appendChild(
+          input
+        );
+
+
+        wrapper.appendChild(
+          label
+        );
+
+
+        options.appendChild(
+          wrapper
+        );
+
+      }
+
+    );
+
+  }
+
+
+  /*
+   * BACK BUTTON
+   */
+
+  if (
+    currentQuestion > 0
+  ) {
+
+
+    const back =
+      document.createElement(
+        "button"
+      );
+
+
+    back.type =
+      "button";
+
+
+    back.className =
+      "secondary-button";
+
+
+    back.textContent =
+      "Back";
+
+
+    back.addEventListener(
+
+      "click",
+
+      function() {
+
+        saveCurrentAnswer();
+
+
+        currentQuestion--;
+
+
+        renderQuestion();
+
+      }
+
+    );
+
+
+    actions.appendChild(
+      back
+    );
+
+  }
+
+
+  /*
+   * NEXT BUTTON
+   */
+
+  const next =
+    document.createElement(
+      "button"
+    );
+
+
+  next.type =
+    "button";
+
+
+  next.className =
+    "next-button";
+
+
+  next.textContent =
+
+    currentQuestion ===
+    questions.length - 1
+
+      ? "Review & Submit"
+
+      : "Continue";
+
+
+  next.addEventListener(
+
+    "click",
+
+    function() {
+
+
+      if (
+        !saveCurrentAnswer()
+      ) {
+
+        return;
+
+      }
+
+
+      if (
+        currentQuestion ===
+        questions.length - 1
+      ) {
+
+        submitSurvey();
+
+      }
+
+      else {
+
+        currentQuestion++;
+
+        renderQuestion();
+
+      }
+
+    }
+
+  );
+
+
+  actions.appendChild(
+    next
+  );
+
+}
+
+
+/* =====================================================
+   SAVE CURRENT ANSWER
+   ===================================================== */
+
+function saveCurrentAnswer() {
+
+
+  const question =
+    questions[
+      currentQuestion
+    ];
+
+
+  /*
+   * TEXT
+   */
+
+  if (
+    question.type ===
+    "textarea"
+  ) {
+
+
+    const textarea =
+      document.getElementById(
+        "questionTextarea"
+      );
+
+
+    answers[
+      question.id
+    ] =
+      textarea.value.trim();
+
+
+    return true;
+
+  }
+
+
+  /*
+   * MULTI SELECT
+   */
+
+  if (
+    question.type ===
+    "multi"
+  ) {
+
+
+    const selected =
+      Array.from(
+
+        document.querySelectorAll(
+          'input[name="questionOption"]:checked'
+        )
+
+      ).map(
+
+        function(input) {
+
+          return input.value;
+
+        }
+
+      );
+
+
+    answers[
+      question.id
+    ] =
+      selected;
+
+
+    if (
+      selected.length === 0
+    ) {
+
+      alert(
+        "Please select at least one option."
+      );
+
+      return false;
+
+    }
+
+
+    return true;
+
+  }
+
+
+  /*
+   * SINGLE SELECT
+   */
+
+  const selected =
+    document.querySelector(
+      'input[name="questionOption"]:checked'
+    );
+
+
+  if (!selected) {
+
+    alert(
+      "Please select an option."
+    );
+
+    return false;
+
+  }
+
+
+  answers[
+    question.id
+  ] =
+    selected.value;
+
+
+  return true;
+
+}
+
+
+/* =====================================================
+   SUBMIT SURVEY
+   ===================================================== */
+
+function submitSurvey() {
+
+
+  if (
+    !selectedLocation
+  ) {
+
+    alert(
+      "No location has been selected."
+    );
+
+    return;
+
+  }
+
+
+  if (
+    GOOGLE_SCRIPT_URL.includes(
+      "PASTE_YOUR"
+    )
+  ) {
+
+    alert(
+      "The survey has not yet been connected to Google Sheets."
+    );
+
+    return;
+
+  }
+
+
+  /*
+   * Build payload.
+   */
+
+  const payloadData = {
+
+
+    participantCode:
+      answers.participantCode,
+
+
+    locationMethod:
+      locationMethod === "gps"
+
+        ? "GPS"
+
+        : "Manual Map Selection",
+
+
+    latitude:
+      selectedLocation.latitude,
+
+
+    longitude:
+      selectedLocation.longitude,
+
+
+    ageGroup:
+      answers.ageGroup,
+
+
+    commuteFrequency:
+      answers.commuteFrequency,
+
+
+    transport:
+      answers.transport.join(
+        " | "
+      ),
+
+
+    journeyDuration:
+      answers.journeyDuration,
+
+
+    experiencedBehaviour:
+      answers.experiencedBehaviour,
+
+
+    behaviourType:
+      answers.behaviourType.join(
+        " | "
+      ),
+
+
+    timeOfDay:
+      answers.timeOfDay,
+
+
+    crowding:
+      answers.crowding,
+
+
+    impact:
+      answers.impact.join(
+        " | "
+      ),
+
+
+    discomfort:
+      answers.discomfort,
+
+
+    description:
+      answers.description,
+
+
+    suggestions:
+      answers.suggestions
+
+
+  };
+
+
+  /*
+   * Create hidden POST form.
+   */
+
+  const form =
+    document.createElement(
+      "form"
+    );
+
+
+  form.method =
+    "POST";
+
+
+  form.action =
+    GOOGLE_SCRIPT_URL;
+
+
+  form.target =
+    "submissionFrame";
+
+
+  form.style.display =
+    "none";
+
+
+  const payload =
+    document.createElement(
+      "input"
+    );
+
+
+  payload.type =
+    "hidden";
+
+
+  payload.name =
+    "payload";
+
+
+  payload.value =
+    JSON.stringify(
+      payloadData
+    );
+
+
+  form.appendChild(
+    payload
+  );
+
+
+  document.body.appendChild(
+    form
+  );
+
+
+  /*
+   * Prevent duplicate submission.
+   */
+
+  document
+    .querySelectorAll(
+      "button"
+    )
+    .forEach(
+
+      function(button) {
+
+        button.disabled =
+          true;
+
+      }
+
+    );
+
+
+  /*
+   * Submit to Apps Script.
+   */
+
+  form.submit();
+
+
+  /*
+   * Show confirmation.
+
+   * Apps Script receives the data before
+   * this confirmation is displayed.
+   */
+
+  setTimeout(
+
+    function() {
+
+      form.remove();
+
+      showSuccess();
+
+    },
+
+    1800
+
+  );
+
+}
+
+
+/* =====================================================
+   SUCCESS
+   ===================================================== */
+
+function showSuccess() {
+
+
+  document
+    .getElementById(
+      "successScreen"
+    )
+    .style.display =
+    "flex";
+
+}
+
+
+/* =====================================================
+   INFO MODAL
+   ===================================================== */
+
+const infoButton =
+  document.getElementById(
+    "infoButton"
+  );
+
+
+const infoModal =
+  document.getElementById(
+    "infoModal"
+  );
+
+
+const closeInfo =
+  document.getElementById(
+    "closeInfo"
+  );
+
+
+const closeInfoButton =
+  document.getElementById(
+    "closeInfoButton"
+  );
+
+
+infoButton.addEventListener(
+
+  "click",
+
+  function() {
+
+    infoModal.style.display =
+      "flex";
+
+  }
+
+);
+
+
+closeInfo.addEventListener(
+
+  "click",
+
+  function() {
+
+    infoModal.style.display =
+      "none";
+
+  }
+
+);
+
+
+closeInfoButton.addEventListener(
+
+  "click",
+
+  function() {
+
+    infoModal.style.display =
+      "none";
+
+  }
+
+);
+
+
+/* =====================================================
+   END
+   ===================================================== */
+
+</script>
+
+</body>
+
+</html>
