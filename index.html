@@ -345,11 +345,11 @@ summary{cursor:pointer;font-weight:700}
     <div class="record-map"><div id="recordMap"></div><div class="record-help"><b>Tap the map to add a point.</b><br>Then drag the marker to the exact spot. Use <b>My location</b> when you are standing there.</div></div>
     <aside class="record-side">
       <div class="record-side-inner">
-        <div class="card" style="margin:0"><b>Record the experience</b><p class="muted">Mark every place you want to photograph or code later.</p><div class="record-count" id="recordCount">0 places recorded</div></div>
+        <div class="card" style="margin:0"><b>Record the experience</b><p class="muted">Mark a place, then photograph what happened or what you noticed. Part 2 has detailed harassment and street-condition icons.</p><div class="record-count" id="recordCount">0 places recorded</div></div>
         <div id="recordList" class="record-list"></div>
       </div>
       <div class="record-actions">
-        <div class="row"><button class="btn" data-act="recordClear">Clear points</button></div><button class="btn block" data-act="recordCsv">📄 Optional: upload a CSV</button>
+        <div class="row"><button class="btn" data-act="recordClear">Clear points</button><button class="btn" data-act="recordCamera" id="recordCameraBtn">📷 Take photo</button><button class="btn" data-act="recordGsv" id="recordGsvBtn">🛣 Street View</button></div><button class="btn block" data-act="recordCsv">📄 Optional: upload a CSV</button>
         <button class="btn primary big block" data-act="beginCoding">Continue to Part 2 · Code images →</button>
       </div>
     </aside>
@@ -360,6 +360,7 @@ summary{cursor:pointer;font-weight:700}
 <div id="toasts"></div>
 <div id="dragmask" class="hidden">📂 Drop panoramas — name them after the point ID to match automatically</div>
 <input type="file" id="fileImg" accept="image/*" multiple hidden>
+<input type="file" id="fileCamera" accept="image/*" capture="environment" hidden>
 <input type="file" id="fileCsv" accept=".csv,text/csv" hidden>
 
 <script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.js"></script>
@@ -402,21 +403,42 @@ const faceFor = v => v == null ? '' : SCORE[Math.min(5, Math.max(1, Math.round(v
 /* ---------- qualitative icon sets: Why Loiter + She City ---------- */
 const LENSES = [
   {
-    id: 'combined', emoji: '✨', name: 'Street experience',
-    blurb: 'A simple combined lens inspired by Why Loiter? and She City: access, comfort, visibility, care, belonging and the freedom to use public space.',
+    id: 'harassment', emoji: '🚨', name: 'Harassment & unwanted attention',
+    blurb: 'Use these icons first when the image shows or records street harassment, sexual harassment, intimidation or unwanted attention toward women and girls.',
+    params: [
+      { key: 'stare', emoji: '👁️', label: 'Staring / watching', desc: 'Someone is persistently staring, watching, tracking with their eyes, or making a woman feel observed.', tags: ['Staring','Repeated watching','Group watching','Following with eyes'] },
+      { key: 'catcall', emoji: '📣', label: 'Catcalling / comments', desc: 'Unwanted calling out, whistles, sexual jokes, comments about appearance or invitations.', tags: ['Whistling','Sexual comment','Body comment','Invitation','Mocking'] },
+      { key: 'gesture', emoji: '🫵', label: 'Sexual gestures', desc: 'Unwanted sexual signs, gestures, sounds or movements directed at a woman.', tags: ['Sexual gesture','Kissing sound','Suggestive sign','Mimicking sex'] },
+      { key: 'follow', emoji: '🚶‍♂️', label: 'Following / trailing', desc: 'A person appears to follow, trail or repeatedly reappear alongside a woman.', tags: ['Following','Repeated reappearance','Vehicle following','Group following'] },
+      { key: 'block', emoji: '🛑', label: 'Blocking / trapping', desc: 'Someone blocks a path, doorway, vehicle, exit or deliberately closes physical space around a woman.', tags: ['Blocked path','Blocked exit','Cornered','Surrounded','Vehicle blocking'] },
+      { key: 'proximity', emoji: '↔️', label: 'Unwanted closeness', desc: 'Someone deliberately comes too close, crowds, corners or invades personal space.', tags: ['Crowding','Cornering','Close approach','Personal-space invasion'] },
+      { key: 'touch', emoji: '✋', label: 'Unwanted touching', desc: 'Unwanted physical contact such as brushing, grabbing, groping or touching a woman.', tags: ['Brushing','Touching','Grabbing','Groping','Unwanted contact'] },
+      { key: 'photo', emoji: '📸', label: 'Unwanted photographing', desc: 'Someone appears to photograph, film or record a woman without consent in a harassing context.', tags: ['Photographing','Filming','Phone pointed','Repeated recording'] },
+      { key: 'exposure', emoji: '⚠️', label: 'Sexual exposure', desc: 'Indecent exposure, flashing or other unwanted sexual display is visible or reported at this place.', tags: ['Flashing','Indecent exposure','Sexual display'] },
+      { key: 'threat', emoji: '😡', label: 'Threat / intimidation', desc: 'Threatening words, gestures, aggressive approach or intimidation make a woman fear escalation.', tags: ['Threat','Aggressive approach','Threatening gesture','Intimidation'] },
+      { key: 'assault', emoji: '🚨', label: 'Sexual / physical assault', desc: 'The image or field record indicates sexual assault, physical assault or attempted assault. Record only what is appropriate and safe to document.', tags: ['Sexual assault','Physical assault','Attempted assault','Violence'] },
+      { key: 'stalking', emoji: '🔁', label: 'Repeated harassment', desc: 'The same person, group or behaviour repeatedly targets women at this place or along this route.', tags: ['Repeated incident','Known hotspot','Same person/group','Pattern'] },
+      { key: 'policing', emoji: '🛡️', label: 'Response / help', desc: 'What support is visible or available when harassment happens?', tags: ['Police nearby','Security','Open shop','Bystanders','Helpline/signage','No help visible'] },
+      { key: 'impact', emoji: '💔', label: 'Effect on movement', desc: 'How does the harassment affect women’s ability to walk, wait, sit, travel or stay in the space?', tags: ['Hurrying','Avoiding place','Changing route','Leaving','Unable to stay','Still comfortable'] },
+      { key: 'other_h', emoji: '✍️', label: 'Other / describe it', desc: 'Something important is happening here that none of the icons describe. Write it in your own words.', tags: [] }
+    ]
+  },
+  {
+    id: 'street', emoji: '🏙️', name: 'Street conditions',
+    blurb: 'A simpler Why Loiter + She City lens for the surroundings that can enable, amplify or reduce harassment.',
     params: [
       { key: 'stay', emoji: '🪑', label: 'Places to stay', desc: 'Is there a comfortable reason to stop, sit, wait or spend time here?', tags: ['Seating','Shade','Food / tea','Ledge','Nowhere to sit'] },
       { key: 'people', emoji: '👥', label: 'People around', desc: 'Who is using the space? Is there a comfortable mix of people and activity?', tags: ['Busy','Quiet','Women present','Families','Mostly men','Mixed ages'] },
-      { key: 'see', emoji: '👀', label: 'See & be seen', desc: 'Can you see what is ahead, and can other people naturally see this space?', tags: ['Open view','Blocked view','Shopfronts','Hidden corner','Long sightline'] },
-      { key: 'light', emoji: '💡', label: 'Light', desc: 'Does the lighting help you see people, faces, paths and entrances?', tags: ['Well lit','Dark patch','Glare','Broken light','Human-scale light'] },
-      { key: 'move', emoji: '🚶', label: 'Easy to move', desc: 'Can you walk, cross, turn around and reach transport without awkward detours?', tags: ['Easy path','Blocked path','Safe crossing','Transport nearby','Detour'] },
-      { key: 'help', emoji: '🚪', label: 'Ways out & help', desc: 'Are there alternative routes and nearby people, shops or services if you need help?', tags: ['Several exits','Dead end','Open shop','Guard / help','Isolated'] },
-      { key: 'care', emoji: '🧹', label: 'Clean & cared for', desc: 'Does the space look maintained, looked after and usable?', tags: ['Clean','Litter','Broken fixture','Fresh / cared for','Neglected'] },
-      { key: 'belong', emoji: '🤝', label: 'Feel welcome', desc: 'Does the space signal that different people—including women—belong here?', tags: ['Welcoming','Inclusive signs','Male-dominated','Hostile cues','Women represented'] },
+      { key: 'see', emoji: '👀', label: 'See & be seen', desc: 'Can women see what is ahead, and can others naturally see this space?', tags: ['Open view','Blocked view','Shopfronts','Hidden corner','Long sightline'] },
+      { key: 'light', emoji: '💡', label: 'Light', desc: 'Does lighting help people see faces, paths, entrances and activity?', tags: ['Well lit','Dark patch','Glare','Broken light','Human-scale light'] },
+      { key: 'move', emoji: '🚶', label: 'Easy to move', desc: 'Can women walk, cross, turn around and reach transport without awkward detours?', tags: ['Easy path','Blocked path','Safe crossing','Transport nearby','Detour'] },
+      { key: 'help', emoji: '🚪', label: 'Ways out & help', desc: 'Are there alternative routes and nearby people, shops or services if help is needed?', tags: ['Several exits','Dead end','Open shop','Guard / help','Isolated'] },
+      { key: 'care', emoji: '🧹', label: 'Clean & cared for', desc: 'Does the space look maintained, looked after and usable?', tags: ['Clean','Litter','Broken fixture','Cared for','Neglected'] },
+      { key: 'belong', emoji: '🤝', label: 'Feel welcome', desc: 'Does the space signal that women and different kinds of people belong here?', tags: ['Welcoming','Inclusive signs','Male-dominated','Hostile cues','Women represented'] },
       { key: 'amenities', emoji: '🚻', label: 'Useful facilities', desc: 'Are toilets, water, seating and other everyday facilities available and usable?', tags: ['Toilet','Drinking water','Seating','Charging','None visible'] },
-      { key: 'activity', emoji: '🏪', label: 'Active edges', desc: 'Are there shops, homes, vendors or other activities that keep the street alive?', tags: ['Open shops','Vendors','Homes facing street','24h activity','Blank frontage'] },
-      { key: 'enjoy', emoji: '🎈', label: 'Fun & comfort', desc: 'Does the place invite pleasure, relaxation, play or simply being there?', tags: ['Greenery','View','Play','Food','Pleasant','Dull / hostile'] },
-      { key: 'risk', emoji: '⚠️', label: 'Things that worry you', desc: 'What makes you hurry, avoid the place or feel uncomfortable?', tags: ['Staring','Catcalling','Crowd pressure','Darkness','Isolation','No concern'] }
+      { key: 'activity', emoji: '🏪', label: 'Active edges', desc: 'Are shops, homes, vendors or other activities keeping the street visible and active?', tags: ['Open shops','Vendors','Homes facing street','Late activity','Blank frontage'] },
+      { key: 'enjoy', emoji: '🎈', label: 'Comfort & pleasure', desc: 'Does the place invite women to enjoy, pause, meet, play or simply be there?', tags: ['Greenery','View','Play','Food','Pleasant','Dull / hostile'] },
+      { key: 'other_s', emoji: '✍️', label: 'Other / describe it', desc: 'Something important about this street cannot be described by the icons. Write it in your own words.', tags: [] }
     ]
   }
 ];
@@ -430,7 +452,7 @@ let SETUP = {}; try { SETUP = JSON.parse(localStorage.getItem(SETUP_KEY) || '{}'
 const cfg = k => (SETUP[k] || CONFIG[k] || '');
 const S = {
   auth: null, session: null, rows: null,
-  points: [], currentId: null, selPin: null, activeParam: null, lens: 'loiter',
+  points: [], currentId: null, selPin: null, activeParam: null, lens: 'harassment',
   dirtyAnn: new Set(), dirtyRev: new Set(), deleted: new Set(), viewMode: {}, zip: null, shareLink: ''
 };
 const V = { kind: null, psv: null, markers: null, flat: null, ro: null, host: null };
@@ -609,7 +631,7 @@ $('#sessForm').addEventListener('submit', e => {
    ===================================================================== */
 const cacheKey = () => `sll.cache.${S.auth.user.id}.${S.session}`;
 function recordLoad() {
-  try { recordPoints = JSON.parse(localStorage.getItem(recordKey()) || '[]').filter(p => Number.isFinite(+p.lat) && Number.isFinite(+p.lng)).map((p,i) => ({ id:p.id||`R${String(i+1).padStart(2,'0')}`, name:p.name||`Place ${i+1}`, lat:+p.lat, lng:+p.lng })); } catch { recordPoints=[]; }
+  try { recordPoints = JSON.parse(localStorage.getItem(recordKey()) || '[]').filter(p => Number.isFinite(+p.lat) && Number.isFinite(+p.lng)).map((p,i) => ({ id:p.id||`R${String(i+1).padStart(2,'0')}`, name:p.name||`Place ${i+1}`, lat:+p.lat, lng:+p.lng, img:p.img||null })); } catch { recordPoints=[]; }
 }
 function recordSave() { try { localStorage.setItem(recordKey(), JSON.stringify(recordPoints)); } catch {} }
 function recordInitMap() {
@@ -629,12 +651,49 @@ function renderRecordMap(fit=false){
 }
 function renderRecordList(){
   $('#recordCount').textContent=`${recordPoints.length} place${recordPoints.length===1?'':'s'} recorded`;
+  const cam=$('#recordCameraBtn'); if(cam){ cam.disabled=!recordSelected; cam.title=recordSelected?'Take a photo for the selected place':'Select a place first'; }
+  const gsv=$('#recordGsvBtn'); if(gsv){ gsv.disabled=!recordSelected || !cfg('GOOGLE_MAPS_KEY'); gsv.title=recordSelected?(cfg('GOOGLE_MAPS_KEY')?'Load the closest Google Street View as a flat image':'Add a Google Maps key in Project setup first'):'Select a place first'; }
   const box=$('#recordList'); if(!recordPoints.length){box.innerHTML='<div class="record-empty">🗺️<br><b>No places yet.</b><br>Tap the map or use your location.</div>';return;}
-  box.innerHTML=recordPoints.map((p,i)=>`<div class="record-item ${p.id===recordSelected?'sel':''}"><span class="num">${i+1}</span><div><input data-record-name="${esc(p.id)}" value="${esc(p.name)}" maxlength="60"><small>${p.lat.toFixed(5)}, ${p.lng.toFixed(5)}</small></div><button class="icon" data-act="recordDelete" data-arg="${esc(p.id)}">✕</button></div>`).join('');
+  box.innerHTML=recordPoints.map((p,i)=>`<div class="record-item ${p.id===recordSelected?'sel':''}"><span class="num">${i+1}</span><div><input data-record-name="${esc(p.id)}" value="${esc(p.name)}" maxlength="60"><small>${p.lat.toFixed(5)}, ${p.lng.toFixed(5)}${p.img?' · '+(p.img.source==='Google Street View'?'🛣 Street View':'📷 photo'):''}</small></div><div class="row" style="gap:4px"><button class="icon" data-act="recordCameraFor" data-arg="${esc(p.id)}" title="Take photo">📷</button><button class="icon" data-act="recordGsvFor" data-arg="${esc(p.id)}" title="Load closest Street View">🛣</button><button class="icon" data-act="recordDelete" data-arg="${esc(p.id)}">✕</button></div></div>`).join('');
   $$('[data-record-name]',box).forEach(inp=>inp.addEventListener('change',()=>{const p=recordPoints.find(x=>x.id===inp.dataset.recordName);if(p){p.name=inp.value.trim()||`Place ${recordPoints.indexOf(p)+1}`;recordSave();renderRecordMap();}}));
 }
 function addRecordPoint(lat,lng,name){
   const id='R'+String(Date.now()).slice(-7); const p={id,name:name||`Place ${recordPoints.length+1}`,lat:+lat,lng:+lng}; recordPoints.push(p);recordSelected=id;recordSave();renderRecordList();renderRecordMap(); if(recordPoints.length===1)recordMap.setView([lat,lng],17); toast('Place added — drag the marker to adjust it',{emoji:'📍'});
+}
+async function recordCameraFor(id) {
+  const p = recordPoints.find(x => x.id === id); if (!p) { toast('Select a place first.', { emoji: '📍' }); return; }
+  recordSelected = id; renderRecordList(); renderRecordMap();
+  $('#fileCamera').dataset.pointId = id; $('#fileCamera').click();
+}
+async function handleRecordCamera(file) {
+  const id = $('#fileCamera').dataset.pointId || recordSelected; const p = recordPoints.find(x => x.id === id);
+  if (!p || !file) return;
+  await idb.put(imgKey(p), file);
+  p.img = { source: 'Field photo', name: file.name || 'camera-photo.jpg', attribution: 'Field photo' };
+  recordSelected = p.id; recordSave(); renderRecordList(); renderRecordMap();
+  toast('Photo saved to this place — you can code it in Part 2.', { emoji: '📷', ms: 5000 });
+}
+async function recordStreetViewFor(id) {
+  const p = recordPoints.find(x => x.id === id); if (!p) { toast('Select a place first.', { emoji: '📍' }); return; }
+  const key = cfg('GOOGLE_MAPS_KEY');
+  if (!key) { toast('Add a Google Maps API key in Project setup first.', { emoji: '🔑', ms: 5000 }); return; }
+  recordSelected = id; renderRecordList(); renderRecordMap();
+  toast('Finding the closest Street View…', { emoji: '🛣', ms: 5000 });
+  try {
+    const mr = await fetch(`https://maps.googleapis.com/maps/api/streetview/metadata?location=${p.lat},${p.lng}&radius=120&source=outdoor&key=${enc(key)}`);
+    const m = await mr.json();
+    if (m.status !== 'OK') throw new Error(m.error_message || (m.status === 'ZERO_RESULTS' ? 'No Street View was found within 120 m.' : `Google replied: ${m.status}`));
+    const la = m.location.lat, lo = m.location.lng;
+    const heading = Math.round((bearing(la, lo, p.lat, p.lng) * 180 / Math.PI + 360) % 360);
+    const url = `https://maps.googleapis.com/maps/api/streetview?size=640x640&pano=${enc(m.pano_id)}&heading=${heading}&pitch=0&fov=90&source=outdoor&key=${enc(key)}`;
+    const r = await fetch(url);
+    if (!r.ok) throw new Error(`Street View Static API answered ${r.status}. Check that Street View Static API is enabled for your key.`);
+    const blob = await r.blob();
+    await idb.put(imgKey(p), blob);
+    p.img = { source: 'Google Street View', attribution: `© Google${m.date ? ' · ' + m.date : ''}`, dist: dist(p.lat,p.lng,la,lo), bearing: heading * Math.PI / 180, panoId: m.pano_id, flat: true };
+    recordSave(); renderRecordList(); renderRecordMap();
+    toast('Closest Street View saved as a flat image — ready for Part 2 coding.', { emoji: '🛣', ms: 5500 });
+  } catch (e) { toast(e.message || 'Could not load Street View.', { emoji: '⚠️', ms: 6000 }); }
 }
 function recordLocate(){
   if(!navigator.geolocation){toast('Location is not available in this browser',{emoji:'⚠️'});return;}
@@ -662,10 +721,10 @@ async function beginCoding(useCsv = false) {
     if (!csvOverrideRows?.length) { toast('Choose a CSV file first.', { emoji: '📄' }); return; }
     points = csvRowsToPoints(csvOverrideRows, S.session);
   } else {
-    points = recordPoints.map(p => ({ id: p.id, name: p.name, lat: p.lat, lng: p.lng, props: { source: 'field recording' } }));
+    points = recordPoints.map(p => ({ id: p.id, name: p.name, lat: p.lat, lng: p.lng, img: p.img || null, props: { source: 'field recording' } }));
   }
   if (!points.length) { toast(useCsv ? 'No usable points found for this session in the CSV.' : 'Add at least one place first.', { emoji: '⚠️' }); return; }
-  const seen = new Set(); S.points = points.map((p, i) => { let id = p.id || `P${i + 1}`, u = id, k = 2; while (seen.has(u)) u = `${id}-${k++}`; seen.add(u); return { ...p, id: u, annotations: [], overall: null, done: false, img: null }; });
+  const seen = new Set(); S.points = points.map((p, i) => { let id = p.id || `P${i + 1}`, u = id, k = 2; while (seen.has(u)) u = `${id}-${k++}`; seen.add(u); return { ...p, id: u, annotations: [], overall: null, done: false, img: p.img || null }; });
   S.currentId = null; S.selPin = null; S.zip = null; S.shareLink = ''; S.dirtyAnn = new Set(); S.dirtyRev = new Set(); S.deleted = new Set(); S.viewMode = {};
   loadCache(); showScreen('app'); closeModal(); setTab('map'); lastLevel = levelInfo(xpNow()).i; renderAll(true);
   const first = S.points.find(p => !p.done) || S.points[0]; selectPoint(first.id, { fly: false, tab: false });
@@ -830,9 +889,9 @@ function renderCode() {
     const pr = paramOf(a), base = pr ? pr.tags : [], tagList = [...base, ...a.tags.filter(t => !base.includes(t))];
     editor = `<section class="card"><div class="card-h"><b>${esc(emojiFor(a))} ${esc(a.paramLabel || (pr && pr.label) || 'Pin')}</b><button class="icon" data-act="delpin" title="Delete pin (Del)">🗑</button></div>
       <p class="q">${esc(pr ? pr.desc : '')}</p>
-      <div class="scores">${SCORE.map(s => `<button class="sc ${a.score === s.n ? 'on' : ''}" style="--c:${scoreColor(s.n)}" data-act="score" data-arg="${s.n}" title="Key ${s.n}"><span>${s.emoji}</span><small>${s.label}</small></button>`).join('')}</div>
+      ${String(a.param || '').startsWith('other') ? `<label class="fine" style="display:block;margin:8px 0 5px"><b>Describe it in your own words</b></label><textarea class="note" id="noteIn" placeholder="What is happening here that the icons cannot describe? Be specific about what you see, hear or experienced.">${esc(a.note)}</textarea>` : `<div class="scores">${SCORE.map(s => `<button class="sc ${a.score === s.n ? 'on' : ''}" style="--c:${scoreColor(s.n)}" data-act="score" data-arg="${s.n}" title="Key ${s.n}"><span>${s.emoji}</span><small>${s.label}</small></button>`).join('')}</div>
       <div class="tags">${tagList.map(t => `<button class="chip ${a.tags.includes(t) ? 'on' : ''}" data-act="tag" data-arg="${esc(t)}">${esc(t)}</button>`).join('')}<input class="tag-in" id="tagIn" placeholder="+ tag" maxlength="28"></div>
-      <textarea class="note" id="noteIn" placeholder="What do you notice? e.g. “shutters down after 7pm, nowhere to sit”">${esc(a.note)}</textarea>
+      <textarea class="note" id="noteIn" placeholder="What do you notice? e.g. “shutters down after 7pm, nowhere to sit”">${esc(a.note)}</textarea>`}
       <button class="btn sm block" data-act="selpin" data-arg="">✔ Done with this pin</button></section>`;
   } else {
     const ap = ALL_PARAMS.find(x => x.key === S.activeParam) || lens.params[0];
@@ -1082,7 +1141,7 @@ async function renderAnnotated(p) {
   ctx.textAlign = 'left'; ctx.textBaseline = 'alphabetic'; ctx.fillStyle = '#ff8fb8'; ctx.font = font('800', 30); ctx.fillText('She Loiter Lens', pad, L0 + 38 * u);
   ctx.fillStyle = '#fff'; ctx.font = font('700', 22); ctx.fillText(`Session ${S.session} · ${p.id} — ${p.name}`, pad, L0 + 68 * u);
   ctx.fillStyle = '#cbbde0'; ctx.font = font('400', 18); const ov = p.overall != null ? `   ·   Overall feeling: ${SCORE[p.overall - 1].emoji} ${p.overall}/5 ${SCORE[p.overall - 1].label}` : '';
-  ctx.fillText(`${p.lat.toFixed(5)}, ${p.lng.toFixed(5)}   ·   coder ${S.auth.user.userid}   ·   ${stamp()}${ov}`, pad, L0 + 90 * u);
+  ctx.fillText(`${p.lat.toFixed(5)}, ${p.lng.toFixed(5)}   ·   ${stamp()}${ov}`, pad, L0 + 90 * u);
   if (!entries.length) { ctx.fillStyle = '#cbbde0'; ctx.fillText('No pins were placed on this image.', pad, L0 + headH + 22 * u); }
   entries.forEach(e => {
     const x = pad + e.col * (colW + pad), y = L0 + headH + e.y, col = scoreColor(e.a.score);
@@ -1262,6 +1321,10 @@ async function act(name, arg, el, e) {
     case 'recordDelete': recordPoints = recordPoints.filter(p => p.id !== arg); if(recordSelected===arg) recordSelected=null; recordSave(); renderRecordList(); renderRecordMap(); break;
     case 'recordClear': if(recordPoints.length && confirm('Clear all recorded places for this session?')){recordPoints=[];recordSelected=null;recordSave();renderRecordList();renderRecordMap();} break;
     case 'recordCsv': $('#fileCsv').click(); break;
+    case 'recordCamera': recordCameraFor(recordSelected); break;
+    case 'recordCameraFor': recordCameraFor(arg); break;
+    case 'recordGsv': recordStreetViewFor(recordSelected); break;
+    case 'recordGsvFor': recordStreetViewFor(arg); break;
     case 'beginCoding': beginCoding(false); break;
 
     case 'account': openAccount(); break;
@@ -1304,6 +1367,7 @@ document.addEventListener('click', e => { const b = e.target.closest('[data-act]
 
 /* ---------- files, drag & drop, inputs, keyboard ---------- */
 $('#fileCsv').addEventListener('change', e => { const f=e.target.files?.[0]; if(f) handleCsvUpload(f); e.target.value=''; });
+$('#fileCamera').addEventListener('change', e => { const f=e.target.files?.[0]; if(f) handleRecordCamera(f); e.target.value=''; });
 $('#fileImg').addEventListener('change', e => { if (!cur() && e.target.files.length === 1) toast('Select a point first', { emoji: '📍' }); else handleImageFiles(e.target.files); e.target.value = ''; });
 $('#search').addEventListener('input', renderList); $('#filter').addEventListener('change', renderList);
 let dragDepth = 0;
@@ -1311,7 +1375,7 @@ addEventListener('dragenter', e => { if (S.session && e.dataTransfer?.types?.inc
 addEventListener('dragleave', () => { if (--dragDepth <= 0) { dragDepth = 0; $('#dragmask').classList.add('hidden'); } });
 addEventListener('dragover', e => e.preventDefault());
 addEventListener('drop', e => { e.preventDefault(); dragDepth = 0; $('#dragmask').classList.add('hidden'); if (S.session) handleImageFiles(e.dataTransfer.files); });
-document.addEventListener('input', e => { if (e.target.id === 'noteIn') { const a = selPinObj(); if (a) { a.note = e.target.value; touchAnn(a); save(); } } });
+document.addEventListener('input', e => { if (e.target.id === 'noteIn') { const a = selPinObj(); if (a) { a.note = e.target.value; if (String(a.param || '').startsWith('other')) { const clean = e.target.value.trim().replace(/\s+/g,' '); a.paramLabel = clean ? `Other: ${clean.slice(0, 55)}${clean.length > 55 ? '…' : ''}` : 'Other / describe it'; } touchAnn(a); save(); renderCode(); renderPins(); } } });
 document.addEventListener('change', e => { if (e.target.id === 'noteIn') { refreshItem(cur()); renderHeader(); } });
 document.addEventListener('keydown', e => {
   if (e.target.id === 'tagIn' && e.key === 'Enter') { const a = selPinObj(), v = e.target.value.trim(); if (a && v && !a.tags.includes(v)) { a.tags.push(v); touchAnn(a); pinsChanged(); setTimeout(() => $('#tagIn')?.focus(), 0); } return; }
